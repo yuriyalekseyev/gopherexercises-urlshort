@@ -1,12 +1,16 @@
 package main
 
 import (
+	"flag"
 	"io/ioutil"
 	"net/http"
 	"urlshort/handlers"
 )
 
 func main() {
+	ymlFileName := flag.String("file", "pairs.yml", "a yml file with path/url pairs")
+	flag.Parse()
+
 	mux := http.NewServeMux()
 	mux.HandleFunc("/", handlers.DefaultHandler)
 
@@ -17,7 +21,7 @@ func main() {
 	}
 	mapHandler := handlers.MapHandler(pathsToUrls, mux)
 
-	ymlFile, err := ioutil.ReadFile("./pairs.yml")
+	ymlFile, err := ioutil.ReadFile(*ymlFileName)
 	if err != nil {
 		panic(err)
 	}
