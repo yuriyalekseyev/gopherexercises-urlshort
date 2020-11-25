@@ -2,6 +2,7 @@ package main
 
 import (
 	"flag"
+	"github.com/tidwall/buntdb"
 	"io/ioutil"
 	"net/http"
 	"urlshort/handlers"
@@ -14,7 +15,21 @@ func main() {
 	mux := http.NewServeMux()
 	mux.HandleFunc("/", handlers.DefaultHandler)
 
-	pairs := []handlers.PathUrlPair{
+	db, err := buntdb.Open(":memory:")
+	if err != nil {
+		panic(err)
+	}
+	defer db.Close()
+
+	err = db.Update(func(tx *buntdb.Tx) error {
+		_, _, err := tx.Set("/db", "https://google.com", nil)
+		return err
+	})
+	if err != nil {
+		panic(err)
+	}
+
+	mapHandlerPairs := []handlers.PathUrlPair{
 		{
 			Path: "/g",
 			Url:  "https://google.com",
@@ -28,7 +43,7 @@ func main() {
 			Url:  "https://yandex.ru",
 		},
 	}
-	mapHandler := handlers.MapHandler(pairs, mux)
+	mapHandler := handlers.MapHandler(mapHandlerPairs, mux)
 
 	ymlFile, err := ioutil.ReadFile(*ymlFileName)
 	if err != nil {
@@ -50,5 +65,10 @@ func main() {
 		panic(err)
 	}
 
-	_ = http.ListenAndServe(":8080", jsonHandler)
+	dbHandler, err := handlers.DBHandler(db, jsonHandler)
+	if err != nil {
+		panic(err)
+	}
+
+	_ = http.ListenAndServe(":8080", dbHandler)
 }

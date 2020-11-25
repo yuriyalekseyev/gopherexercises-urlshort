@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"github.com/tidwall/buntdb"
 	"gopkg.in/yaml.v2"
 	"net/http"
 )
@@ -11,6 +12,25 @@ import (
 type PathUrlPair struct {
 	Path string
 	Url  string
+}
+
+func DBHandler(db *buntdb.DB, fallback http.Handler) (http.HandlerFunc, error) {
+	var pairs []PathUrlPair
+	err := db.View(func(tx *buntdb.Tx) error {
+		err := tx.Ascend("", func(key, value string) bool {
+			pairs = append(pairs, PathUrlPair{
+				Path: key,
+				Url:  value,
+			})
+			return true
+		})
+		return err
+	})
+	if err != nil {
+		panic(err)
+	}
+
+	return MapHandler(pairs, fallback), err
 }
 
 func JSONHandler(jsonRaw []byte, fallback http.Handler) (http.HandlerFunc, error) {
@@ -57,5 +77,6 @@ func findUrl(pairs []PathUrlPair, path string) (url string, err error) {
 			return pair.Url, nil
 		}
 	}
+
 	return "", errors.New("path " + path + " not found")
 }
