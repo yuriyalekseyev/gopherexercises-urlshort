@@ -14,12 +14,21 @@ func main() {
 	mux := http.NewServeMux()
 	mux.HandleFunc("/", handlers.DefaultHandler)
 
-	pathsToUrls := map[string]string{
-		"/g":  "https://google.com",
-		"/gh": "https://github.com",
-		"/y":  "https://yandex.ru",
+	pairs := []handlers.PathUrlPair{
+		{
+			Path: "/g",
+			Url:  "https://google.com",
+		},
+		{
+			Path: "/gh",
+			Url:  "https://github.com",
+		},
+		{
+			Path: "/y",
+			Url:  "https://yandex.ru",
+		},
 	}
-	mapHandler := handlers.MapHandler(pathsToUrls, mux)
+	mapHandler := handlers.MapHandler(pairs, mux)
 
 	ymlFile, err := ioutil.ReadFile(*ymlFileName)
 	if err != nil {
