@@ -1,18 +1,34 @@
 package handlers
 
 import (
+	"encoding/json"
 	"fmt"
 	"gopkg.in/yaml.v2"
 	"net/http"
 )
 
-type ymlPair struct {
+type PathUrlPair struct {
 	Path string
 	Url  string
 }
 
+func JSONHandler(jsonRaw []byte, fallback http.Handler) (http.HandlerFunc, error) {
+	var pairs []PathUrlPair
+	err := json.Unmarshal(jsonRaw, &pairs)
+	if err != nil {
+		panic(err)
+	}
+
+	pathsToUrls := make(map[string]string, len(pairs))
+	for _, pair := range pairs {
+		pathsToUrls[pair.Path] = pair.Url
+	}
+
+	return MapHandler(pathsToUrls, fallback), err
+}
+
 func YAMLHandler(yml []byte, fallback http.Handler) (http.HandlerFunc, error) {
-	var pairs []ymlPair
+	var pairs []PathUrlPair
 	err := yaml.Unmarshal(yml, &pairs)
 	if err != nil {
 		panic(err)

@@ -8,7 +8,7 @@ import (
 )
 
 func main() {
-	ymlFileName := flag.String("file", "pairs.yml", "a yml file with path/url pairs")
+	ymlFileName := flag.String("file", "src/yml.yml", "a yml file with path/url pairs")
 	flag.Parse()
 
 	mux := http.NewServeMux()
@@ -31,5 +31,15 @@ func main() {
 		panic(err)
 	}
 
-	_ = http.ListenAndServe(":8080", ymlHandler)
+	jsonFile, err := ioutil.ReadFile("src/json.json")
+	if err != nil {
+		panic(err)
+	}
+
+	jsonHandler, err := handlers.JSONHandler(jsonFile, ymlHandler)
+	if err != nil {
+		panic(err)
+	}
+
+	_ = http.ListenAndServe(":8080", jsonHandler)
 }
